@@ -6,7 +6,7 @@ TEACHER_FILE="teachers.txt"
 STUDENT_ACCOUNTS_FILE="student_accounts.txt"
 COURSES_FILE="courses.txt"
 TEACHER_COURSES_FILE="teacher_courses.txt"
-ENROLLMENT_FILE="enrollments.txt"
+ENROLLMENT_FILE="enrollment.txt"
 
 
 # Ensure necessary files exist
@@ -157,52 +157,27 @@ teacher_login() {
     fi
 }
 
+
+
+
+
 view_teacher_students() {
-    teacher_id=$1
-    
-    # Ensure the files exist
-    if [ ! -f "$TEACHER_COURSES_FILE" ] || [ ! -f "$ENROLLMENT_FILE" ] || [ ! -f "$STUDENT_ACCOUNTS_FILE" ]; then
-        echo "Required files are missing!"
-        read -p "Press any key to continue..."
-        return
+    local file_path="enrollment.txt"
+    if [[ ! -f "$file_path" ]]; then
+        echo "Error: The file $file_path does not exist."
+        return 1
     fi
-    
-    echo "Courses assigned to you:"
-    assigned_courses=$(grep "^$teacher_id," $TEACHER_COURSES_FILE | cut -d',' -f2)
-    echo "Debug: Assigned courses are: $assigned_courses" # Debug statement
-    
-    echo
-    echo "Students enrolled in your courses:"
-    
-    # Ensure the assigned courses are not empty
-    if [ -z "$assigned_courses" ]; then
-        echo "No courses assigned to you!"
-        read -p "Press any key to continue..."
-        return
-    fi
-    
-    declare -A student_courses
-    
-    while IFS=, read -r student_id course_name; do
-        echo "Debug: Processing student_id: $student_id, course_name: $course_name" # Debug statement
-        if echo "$assigned_courses" | grep -qw "$course_name"; then
-            if [ -n "${student_courses[$student_id]}" ]; then
-                student_courses[$student_id]="${student_courses[$student_id]},$course_name"
-            else
-                student_courses[$student_id]="$course_name"
-            fi
-        fi
-    done < $ENROLLMENT_FILE
-    
-    for student_id in "${!student_courses[@]}"; do
-        student_info=$(grep "^$student_id," $STUDENT_ACCOUNTS_FILE)
-        student_name=$(echo $student_info | cut -d',' -f1)
-        echo "$student_name,$student_id | Courses taken: ${student_courses[$student_id]}"
-    done | column -t -s '|'
-    
+    declare -A enrollment_dict
+    while IFS=, read -r student_id course; do
+        [[ -z "$student_id" || -z "$course" ]] && continue
+        enrollment_dict["$student_id"]+="$course,"
+    done < "$file_path"
+    for student_id in "${!enrollment_dict[@]}"; do
+        courses=$(echo "${enrollment_dict[$student_id]}" | sed 's/,$//' | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+        echo "$student_id | course:$courses"
+    done
     read -p "Press any key to continue..."
 }
-
 
 
 teacher_menu() {
@@ -264,16 +239,31 @@ student_login() {
 }
 
 add_course() {
-    student_id=$1
+    local student_id=$1
+    
+    # Display all available courses
+    echo "Available Courses:"
+    cat $COURSES_FILE
+    echo
+    
+    # Prompt user to enter the course name
     read -p "Enter course name to enroll: " course
+    
+    # Check if the course exists in the courses file
     if grep -q "$course" $COURSES_FILE; then
-        echo "$student_id,$course" >> $ENROLLMENT_FILE
-        echo "Course added successfully!"
+        # Check if the student is already enrolled in the course
+        if grep -q "^$student_id,$course$" $ENROLLMENT_FILE; then
+            echo "You are already enrolled in $course!"
+        else
+            echo "$student_id,$course" >> $ENROLLMENT_FILE
+            echo "Course $course added successfully!"
+        fi
     else
         echo "Course not found!"
     fi
     read -p "Press any key to continue..."
 }
+
 
 
 student_menu() {
