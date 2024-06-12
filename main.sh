@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 STUDENT_FILE="students.txt"
 TEACHER_FILE="teachers.txt"
 STUDENT_ACCOUNTS_FILE="student_accounts.txt"
@@ -8,8 +7,6 @@ COURSES_FILE="courses.txt"
 TEACHER_COURSES_FILE="teacher_courses.txt"
 ENROLLMENT_FILE="enrollment.txt"
 
-
-# Ensure necessary files exist
 touch $STUDENT_FILE $TEACHER_FILE $STUDENT_ACCOUNTS_FILE $COURSES_FILE $TEACHER_COURSES_FILE $ENROLLMENT_FILE
 
 check_password() {
@@ -240,18 +237,11 @@ student_login() {
 
 add_course() {
     local student_id=$1
-    
-    # Display all available courses
     echo "Available Courses:"
     cat $COURSES_FILE
     echo
-    
-    # Prompt user to enter the course name
     read -p "Enter course name to enroll: " course
-    
-    # Check if the course exists in the courses file
     if grep -q "$course" $COURSES_FILE; then
-        # Check if the student is already enrolled in the course
         if grep -q "^$student_id,$course$" $ENROLLMENT_FILE; then
             echo "You are already enrolled in $course!"
         else
