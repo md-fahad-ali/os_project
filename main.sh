@@ -28,15 +28,19 @@ add_student() {
     read -p "Enter student ID: " student_id
     read -p "Enter student grade: " grade
     read -p "Enter course name: " course
-    echo "$name,$student_id,$grade,$course" >> $STUDENT_FILE
-    echo "Student added successfully!"
+    read -p "Enter department: " department
+    echo "$name,$student_id,$grade,$course,$department" >> $STUDENT_FILE
+    echo "$name,$student_id,student123" >> $STUDENT_ACCOUNTS_FILE
+    echo "Student added successfully with default password 'student123'!"
     read -p "Press any key to continue..."
 }
+
 
 remove_student() {
     read -p "Enter student ID to remove: " student_id
     if grep -q "$student_id" $STUDENT_FILE; then
         grep -v "$student_id" $STUDENT_FILE > temp_file && mv temp_file $STUDENT_FILE
+        grep -v "$student_id" $STUDENT_ACCOUNTS_FILE > temp_file && mv temp_file $STUDENT_ACCOUNTS_FILE
         grep -v "$student_id" $ENROLLMENT_FILE > temp_file && mv temp_file $ENROLLMENT_FILE
         echo "Student removed successfully!"
     else
@@ -155,9 +159,6 @@ teacher_login() {
 }
 
 
-
-
-
 view_teacher_students() {
     local file_path="enrollment.txt"
     if [[ ! -f "$file_path" ]]; then
@@ -209,8 +210,12 @@ add_student_account() {
     read -p "Enter student ID: " student_id
     read -s -p "Enter password: " password
     echo
-    echo "$name,$student_id,$password" >> $STUDENT_ACCOUNTS_FILE
-    echo "Student account created successfully!"
+    if grep -q "$student_id" $STUDENT_ACCOUNTS_FILE; then
+        echo "Student ID already exists!"
+    else
+        echo "$name,$student_id,$password" >> $STUDENT_ACCOUNTS_FILE
+        echo "Student account created successfully!"
+    fi
     read -p "Press any key to continue..."
 }
 
@@ -235,6 +240,7 @@ student_login() {
     fi
 }
 
+
 add_course() {
     local student_id=$1
     echo "Available Courses:"
@@ -253,8 +259,6 @@ add_course() {
     fi
     read -p "Press any key to continue..."
 }
-
-
 
 student_menu() {
     student_id=$1
@@ -322,7 +326,6 @@ while true; do
         ;;
         3)
             echo "1. Login"
-            echo "2. Create Account"
             read -p "Enter your choice: " student_choice
             case $student_choice in
                 1)

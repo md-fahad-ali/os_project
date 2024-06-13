@@ -1,2 +1,0 @@
-teacher1,os
-teacher1,database

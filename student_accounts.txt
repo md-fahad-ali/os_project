@@ -1,2 +1,1 @@
-Hasan Sunny,221002094,student123
-Fahad,221002313,1234
+fahad,221002313,student123
